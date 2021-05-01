@@ -10,14 +10,13 @@ app = Flask(__name__,
             static_folder='./static',
             template_folder='./templates')
 
-run_with_ngrok(app)
+# run_with_ngrok(app)
 
 model = Mri2Pet()
+print(model,flush=True)
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    global model
-    print(model,flush=True)
     if request.method == 'POST':
         # text = request.form['text']
         # print(text,flush=True)

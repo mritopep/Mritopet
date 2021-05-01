@@ -4,6 +4,7 @@ from PIL import Image
 import nibabel as nib
 from numpy import load, zeros, copy, arange, eye, uint8
 from os import path
+import cv2
 THIS_FOLDER = path.dirname(path.abspath(__file__))
 
 def load_test():
@@ -31,14 +32,6 @@ def img_to_nii(img):
     image = nib.Nifti1Image(img, affine=eye(4))
     return image
 
-def post_process(data, thresholding=False):
-    if thresholding:
-        img_a = 1 + data[0]
-        img_b = 127.5*img_a
-        ret, opt2 = cv2.cv2.threshold(img_b, 145, 255, cv2.THRESH_BINARY)
-        data[0] = opt2
-    return data
-
 class Mri2Pet:
 
     def __init__(self):
@@ -59,8 +52,8 @@ class Mri2Pet:
         predicted_data = path.join(THIS_FOLDER, 'output/img')
         print(len(predicted_imgs))
         for i in range(len(inp_images)):
-            predicted_imgs = post_process(predicted_imgs[i:i+1], thresholding = True)
-            im = Image.fromarray((predicted_imgs * 255).astype(uint8))
+            img = predicted_imgs[i]
+            im = Image.fromarray((img * 255).astype(uint8))
             im.save(f"{predicted_data}/predict_{i}.jpeg")
-        
+        return predicted_imgs
         

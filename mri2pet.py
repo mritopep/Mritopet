@@ -31,13 +31,21 @@ def img_to_nii(img):
     image = nib.Nifti1Image(img, affine=eye(4))
     return image
 
+def post_process(data, thresholding=False):
+    if thresholding:
+        img_a = 1 + data[0]
+        img_b = 127.5*img_a
+        ret, opt2 = cv2.cv2.threshold(img_b, 145, 255, cv2.THRESH_BINARY)
+        data[0] = opt2
+    return data
+
 class Mri2Pet:
 
     def __init__(self):
         self.model = model()
         self.data = load_test()
 
-    def test(self,n = 245,m = 120):
+    def test(self,n = 245,m = 50):
         inp_images = self.data[0][n : n+m]
         output_img = self.predict(inp_images)
         output_nii = img_to_nii(output_img)
@@ -49,9 +57,10 @@ class Mri2Pet:
         	fake_images[i] = self.model.predict(inp_images[i:i+1])
         predicted_imgs = copy(fake_images)
         predicted_data = path.join(THIS_FOLDER, 'output/img')
-        for i in range(len(predicted_imgs)):
-        	im = Image.fromarray((predicted_imgs[i] * 255).astype(uint8))
-	        im.save(f"{predicted_data}/predict_{i}.jpeg")
-        return predicted_imgs
+        print(len(predicted_imgs))
+        for i in range(len(inp_images)):
+            predicted_imgs = post_process(predicted_imgs[i:i+1], thresholding = True)
+            im = Image.fromarray((predicted_imgs * 255).astype(uint8))
+            im.save(f"{predicted_data}/predict_{i}.jpeg")
         
         

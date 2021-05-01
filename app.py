@@ -12,10 +12,12 @@ app = Flask(__name__,
 
 run_with_ngrok(app)
 
-model = Mri2Pet()
+model = None
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    global model
+    model = Mri2Pet()
     print(model,flush=True)
     if request.method == 'POST':
         # text = request.form['text']
@@ -28,6 +30,7 @@ def index():
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():
+    global model
     model.test()
 
 @app.route("/download", methods=['GET', 'POST'])
@@ -36,4 +39,4 @@ def download():
     return send_file(download, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

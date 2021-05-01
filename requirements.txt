@@ -1,0 +1,6 @@
+SimpleITK
+opencv-python
+matplotlib
+scikit-image
+pillow
+flask-ngrok

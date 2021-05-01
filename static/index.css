@@ -1,0 +1,23 @@
+body {
+    font-family: 'Raleway', sans-serif;
+    font-weight: 600;
+}
+.logo{
+    color: #313946;
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+.header{
+    font-size: 1.5rem;
+    padding: 20px;
+}
+
+.upload{
+    background-color: #f7f8fc;
+    border-radius: 50px;
+}
+
+.lg-img{
+    font-size: 20rem;
+}

@@ -50,7 +50,7 @@ class Mri2Pet:
         predicted_imgs = copy(fake_images)
         predicted_data = path.join(THIS_FOLDER, 'output/img')
         for i in range(len(predicted_imgs)):
-        	im = Image.fromarray(predicted_imgs[i])
+        	im = Image.fromarray((predicted_imgs[i] * 255).astype(np.uint8))
 	        im.save(f"{predicted_data}/predict_{i}.jpeg")
         return predicted_imgs
         

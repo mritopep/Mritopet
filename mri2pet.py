@@ -46,7 +46,7 @@ class Mri2Pet:
     def predict(self, inp_images):
         fake_images = zeros(inp_images.shape)
         for i in range(len(inp_images)):
-        	fake_images[i] = generator.predict(inp_images[i:i+1])
+        	fake_images[i] = self.model.predict(inp_images[i:i+1])
         predicted_imgs = copy(fake_images)
         predicted_data = path.join(THIS_FOLDER, 'output/img')
         for i in range(len(predicted_imgs)):

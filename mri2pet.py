@@ -2,7 +2,7 @@
 from keras.models import load_model
 from PIL import Image
 import nibabel as nib
-from numpy import load, zeros, copy, arange, eye
+from numpy import load, zeros, copy, arange, eye, uint8
 from os import path
 THIS_FOLDER = path.dirname(path.abspath(__file__))
 
@@ -50,7 +50,7 @@ class Mri2Pet:
         predicted_imgs = copy(fake_images)
         predicted_data = path.join(THIS_FOLDER, 'output/img')
         for i in range(len(predicted_imgs)):
-        	im = Image.fromarray((predicted_imgs[i] * 255).astype(np.uint8))
+        	im = Image.fromarray((predicted_imgs[i] * 255).astype(uint8))
 	        im.save(f"{predicted_data}/predict_{i}.jpeg")
         return predicted_imgs
         

@@ -53,8 +53,8 @@ def create_folders():
         mkdir(path.join(output_folder,"img"))
 
 def supported_file(filename):
-    if not "." in filename:
-        return false
+    if "." not in filename:
+        return False
     ext=filename.rsplit(".",1)[1]
     if ext=="nii":
         return True

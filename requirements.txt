@@ -4,3 +4,8 @@ matplotlib
 scikit-image
 pillow
 flask-ngrok
+tensorflow
+keras
+pfmisc
+nibabel
+pydicom

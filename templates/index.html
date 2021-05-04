@@ -53,9 +53,17 @@
               </p>
             </div>
             <div class="row">
+              <!--
               <button type="button" name="" id="" class="btn btn-danger" btn-lg btn-block">
-                <i class="fas fa-plus"></i> Add Files
+                <i class="fas fa-plus"></i> Add File
               </button>
+              -->
+              <form action = "/upload" method = "POST" enctype = "multipart/form-data">
+                
+                  <input type = "file" name = "mri_file" class="btn btn-outline-danger" />
+                  <input class="btn btn-danger" type="submit" value="Upload">
+                
+              </form>
             </div>
             <div class="row">
               <p class="lead">

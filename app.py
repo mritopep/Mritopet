@@ -75,12 +75,15 @@ def upload():
                 filename=secure_filename(f.filename)
                 f.save(path.join(app_root,'input','nii',filename))
                 print("uploaded")
-                #model.next(path.join(app_root,'input','nii',filename))
-                #print('Pet saved')
-
             return redirect(request.url)
             #'file uploaded successfully'
     return render_template("index.html")
+
+@app.route("/next", methods=['GET', 'POST'])
+def next():
+    model.next(path.join(app_root,'input','nii',filename))
+    print('Pet saved')
+
 
 if __name__ == '__main__':
     app.run()

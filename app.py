@@ -11,7 +11,11 @@ app = Flask(__name__,
             static_folder='./static',
             template_folder='./templates')
 
+<<<<<<< HEAD
 #run_with_ngrok(app)
+=======
+run_with_ngrok(app)
+>>>>>>> 65ca161c57be31efbeb627df94d3e851b9e005fa
 
 model = Mri2Pet()
 print(model,flush=True)

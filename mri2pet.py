@@ -62,7 +62,7 @@ def save_to_npz(file, des = ""):
     print(len(files))
     list = []
     for i in range(len(files)):
-        data = cv2.imread(folder + files[i])
+        data = cv2.imread(folder + '/' + files[i])
         data = pre_process_mri(data, gamma_correction=True)
         list.append(data)
     list = np.asarray(list)

@@ -10,7 +10,7 @@ app = Flask(__name__,
             static_folder='./static',
             template_folder='./templates')
 
-# run_with_ngrok(app)
+run_with_ngrok(app)
 
 model = Mri2Pet()
 print(model,flush=True)

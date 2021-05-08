@@ -5,8 +5,8 @@ matplotlib
 scikit-image
 pillow
 flask-ngrok
-tensorflow==2.1.0
-keras==2.3.1
+tensorflow
+keras
 pfmisc
 nibabel
 pydicom

@@ -9,3 +9,4 @@ keras
 pfmisc
 nibabel
 pydicom
+ipykernel

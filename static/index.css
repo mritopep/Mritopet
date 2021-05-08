@@ -1,7 +1,9 @@
 body {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
-}
+    overflow: hidden;
+    
+}    
 .logo{
     color: #313946;
     font-weight: 700;
@@ -13,11 +15,64 @@ body {
     padding: 20px;
 }
 
-.upload{
-    background-color: #f7f8fc;
-    border-radius: 50px;
+.navbarimg{
+    max-height: 7.5rem;
+    width: auto;
+    margin: 0px;
 }
+
+.upload{
+    background-color: #F0F3FC;
+    border-radius: 1rem;
+
+}  
 
 .lg-img{
     font-size: 20rem;
 }
+
+
+.addbtn{
+    position: relative;
+    overflow: hidden;
+}
+.addbtn input{
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0;
+  right: 0;
+  top: 0; 
+
+  
+}
+
+.txt_col{
+    color: #4C5268;
+    font-size: 2.3rem
+
+
+}
+
+.lead{
+    font-size: 20px;
+}
+ 
+footer .row{
+    height: 5.5rem;
+}
+
+.bluebox{
+    background-color: #4C5268 ;
+
+}
+.greenbox{
+    background-color: #60D490; 
+}
+.greenbox a{
+    color: white;
+    font-size: 1.5rem;
+}
+
+
+
+

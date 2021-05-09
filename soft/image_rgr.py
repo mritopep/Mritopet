@@ -1,4 +1,3 @@
-#!/home/miniconda/bin/python
 import SimpleITK as sitk
 import os
 import sys

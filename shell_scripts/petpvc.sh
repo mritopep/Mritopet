@@ -1,4 +1,3 @@
-#!/bin/bash
 source /home/miniconda/etc/profile.d/conda.sh &> ./logs/null.txt
 conda init bash &> ./logs/null.txt
 conda activate petpvc &> ./logs/null.txt

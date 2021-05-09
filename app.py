@@ -4,19 +4,9 @@ from os import path, mkdir, listdir, unlink
 from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 from shutil import rmtree
+from util import *
 
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
+from server_util import *
 
 app_root = path.dirname(path.abspath(__file__))
 
@@ -25,41 +15,79 @@ app = Flask(__name__)
 run_with_ngrok(app)
 
 model = Mri2Pet()
+
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
 
+# initialization
+skull_strip = False
+denoise = False
+bias_field_correction = False
+file_upload_start = False
+file_upload_end = False
+preprocess_start = False
+process_status = True
+preprocess_end = False
+generate_start = False
+generate_end = False
+saving_start = False
+saving_end = False
+start = False
+end = False
 
-def delete_contents(folder_path):
-    folder = folder_path
-    for filename in listdir(folder):
-        file_path = path.join(folder, filename)
-        try:
-            if path.isfile(file_path) or path.islink(file_path):
-                unlink(file_path)
-            elif path.isdir(file_path):
-                rmtree(file_path)
-        except Exception as e:
-            print('Failed to delete %s : %s' % (file_path, e))
 
-    rmtree(folder)
-
-
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    if request.method == 'POST':
-        # text = request.form['text']
-        # print(text,flush=True)
-        # emotion,confidence = emot.test(text)
-        # print(emotion,confidence)
-        return render_template("index.html")
-    else:
-        return render_template("index.html")
+    start = True
+    end = False
+    return render_template("index.html")
 
 
-@app.route("/test", methods=['GET', 'POST'])
-def test():
+@app.route("/upload", methods=['GET', 'POST'])
+def upload():
+    file_upload_start = True
     global model
-    model.load_test_data()
-    model.test()
+    if request.method == 'POST':
+        if request.files:
+            f = request.files['mri_file']
+            if not supported_file(f.filename):
+                print("File not supported")
+                return redirect(request.url)
+            else:
+                create_folders()
+                filename = secure_filename(f.filename)
+                f.save(path.join(app_root, 'input', 'nii', filename))
+                print("uploaded")
+                file_upload_end = True
+
+    return render_template("index.html")
+
+
+@app.route("/next", methods=['GET', 'POST'])
+def next():
+    global model
+    print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
+
+    input_folder = path.join(app_root, 'input', 'nii')
+    file_path = input_folder + '/' + listdir(input_folder)[0]
+
+    preprocess_start = True
+    process_status = model.process(file_path, Skull_Strip=skull_strip,
+                  Denoise=denoise, Bais_Correction=bias_field_correction)
+    preprocess_end = True
+
+    generate_start = True
+    model.generate()
+    generate_end = True
+
+    saving_start = True
+    model.save()
+    saving_end = True
+
+    print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
+
+    start = False
+    end = True
+
     return render_template("index.html")
 
 
@@ -74,6 +102,23 @@ def download():
 
         delete_contents('./output')
         delete_contents('./input')
+
+        # initialization
+        skull_strip = False
+        denoise = False
+        bias_field_correction = False
+        file_upload_start = False
+        file_upload_end = False
+        preprocess_start = False
+        process_status = True
+        preprocess_end = False
+        generate_start = False
+        generate_end = False
+        saving_start = False
+        saving_end = False
+        start = True
+        end = False
+
         print(bcolors.OKBLUE + "All files deleted" + bcolors.ENDC)
 
     response = app.response_class(generate(), mimetype='application/x-gzip')
@@ -82,56 +127,12 @@ def download():
     return response
 
 
-def create_folders():
-    input_folder = path.join(app_root, 'input')
-    if not path.exists(input_folder):
-        mkdir(input_folder)
-        mkdir(path.join(input_folder, "nii"))
-        mkdir(path.join(input_folder, "img"))
-
-    output_folder = path.join(app_root, 'output')
-    if not path.exists(output_folder):
-        mkdir(output_folder)
-        mkdir(path.join(output_folder, "nii"))
-        mkdir(path.join(output_folder, "img"))
-
-
-def supported_file(filename):
-    if "." not in filename:
-        return False
-    ext = filename.rsplit(".", 1)[1]
-    if ext == "nii":
-        return True
-    else:
-        return False
-
-
-@app.route("/upload", methods=['GET', 'POST'])
-def upload():
+@app.route("/test", methods=['GET', 'POST'])
+def test():
     global model
-    if request.method == 'POST':
-        if request.files:
-            f = request.files['mri_file']
-            if not supported_file(f.filename):
-                print("File not supported")
-                return redirect(request.url)
-            else:
-                create_folders()
-                filename = secure_filename(f.filename)
-                f.save(path.join(app_root, 'input', 'nii', filename))
-                print("uploaded")
-                return redirect(url_for('next'))
-
+    model.load_test_data()
+    model.test()
     return render_template("index.html")
-
-
-@app.route("/next", methods=['GET', 'POST'])
-def next():
-    input_folder = path.join(app_root, 'input', 'nii')
-    model.next(input_folder + '/' + listdir(input_folder)[0])
-    print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
-
-    return redirect(url_for('download'))
 
 
 if __name__ == '__main__':

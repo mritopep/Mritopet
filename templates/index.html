@@ -39,10 +39,14 @@
             <p> or</p>
           </div>
           <div>
-            <div class="file btn btn-lg btn-danger addbtn">
+            <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+              <input type="file" name="mri_file" class="btn btn-outline-danger" />
+              <input class="btn btn-danger" type="submit" value="Upload">
+            </form>
+            <!-- <div class="file btn btn-lg btn-danger addbtn">
               <i class="fas fa-plus"></i> Add File
               <input type="file" name="mri_file" class="" />
-            </div>
+            </div> -->
           </div>
           <div>
             <p class="lead">

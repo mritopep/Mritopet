@@ -20,10 +20,7 @@ class bcolors:
 
 app_root = path.dirname(path.abspath(__file__))
 
-app = Flask(__name__,
-            static_url_path='',
-            static_folder='./static',
-            template_folder='./templates')
+app = Flask(__name__)
 
 run_with_ngrok(app)
 

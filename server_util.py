@@ -3,16 +3,6 @@ from shutil import rmtree
 
 app_root = path.dirname(path.abspath(__file__))
 
-DATA = "input"
-
-SHELL = "shell_scripts"
-
-# Temp
-SKULL_STRIP = f'{DATA}/temp/skull_strip'
-DENOISE = f'{DATA}/temp/denoise'
-BAIS_COR = f'{DATA}/temp/bias_cor'
-TEMP_OUTPUT = f'{DATA}/temp/output'
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -31,10 +21,14 @@ def create_folders():
         mkdir(input_folder)
         mkdir(path.join(input_folder, "nii"))
         mkdir(path.join(input_folder, "img"))
-        makedirs(SKULL_STRIP)
-        makedirs(DENOISE)
-        makedirs(BAIS_COR)
-        makedirs(TEMP_OUTPUT)
+
+    temp_folder = path.join(input_folder, 'temp')
+    if not path.exists(temp_folder):
+        mkdir(temp_folder)
+        mkdir(path.join(temp_folder, "denoise"))
+        mkdir(path.join(temp_folder, "skull_strip"))        
+        mkdir(path.join(temp_folder, "bias_cor"))
+        mkdir(path.join(temp_folder, "output"))
 
     output_folder = path.join(app_root, 'output')
     if not path.exists(output_folder):

@@ -69,6 +69,8 @@ def next():
     input_folder = path.join(app_root, 'input', 'nii')
     file_path = input_folder + '/' + listdir(input_folder)[0]
 
+    print(f"File path : {file_path}")
+
     preprocess_start = True
     process_status = model.process(file_path, Skull_Strip=skull_strip,
                   Denoise=denoise, Bais_Correction=bias_field_correction)

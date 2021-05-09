@@ -10,6 +10,7 @@ import numpy as np
 from med2img.med2img import convert
 from matplotlib import pyplot as plt
 import shutil
+import gzip
 
 from model_util import *
 

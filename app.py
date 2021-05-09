@@ -4,7 +4,6 @@ from os import path, mkdir, listdir, unlink
 from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 from shutil import rmtree
-from util import *
 
 from server_util import *
 

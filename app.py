@@ -25,7 +25,7 @@ app = Flask(__name__,
             static_folder='./static',
             template_folder='./templates')
 
-# run_with_ngrok(app)
+run_with_ngrok(app)
 
 model = Mri2Pet()
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)

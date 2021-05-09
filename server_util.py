@@ -1,4 +1,4 @@
-from os import path, mkdir, listdir, unlink
+from os import path, mkdir, listdir, unlink, makedirs
 from shutil import rmtree
 
 app_root = path.dirname(path.abspath(__file__))
@@ -31,10 +31,10 @@ def create_folders():
         mkdir(input_folder)
         mkdir(path.join(input_folder, "nii"))
         mkdir(path.join(input_folder, "img"))
-        mkdir(SKULL_STRIP)
-        mkdir(DENOISE)
-        mkdir(BAIS_COR)
-        mkdir(TEMP_OUTPUT)
+        makedirs(SKULL_STRIP)
+        makedirs(DENOISE)
+        makedirs(BAIS_COR)
+        makedirs(TEMP_OUTPUT)
 
     output_folder = path.join(app_root, 'output')
     if not path.exists(output_folder):

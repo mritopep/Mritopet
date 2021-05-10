@@ -113,7 +113,7 @@ def next():
         end = True
 
     end_time = time.time()
-    print(f"Time Taken : {end_time-start_time} min")
+    print(f"Time Taken : {(end_time-start_time)/60} min")
 
     return render_template("index.html")
 

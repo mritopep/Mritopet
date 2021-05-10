@@ -55,7 +55,8 @@ class Mri2Pet:
         slice_no = 1
 
         for i in range(len(self.img)):
-            fake_images[i] = self.model.predict(self.img[i:i+1])
+            padded_input = pad_2d(self.img[i:i+1], 256, 256)
+            fake_images[i] = self.model.predict(padded_input)
             print("Slice number :", slice_no, "completed")
             slice_no += 1
 

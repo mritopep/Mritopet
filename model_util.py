@@ -22,6 +22,7 @@ DENOISE = f'{DATA}/temp/denoise'
 BAIS_COR = f'{DATA}/temp/bias_cor'
 TEMP_OUTPUT = f'{DATA}/temp/output'
 
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -102,10 +103,12 @@ def read_nifti(file):
     images = np.asarray(images)
     return images
 
+
 def upzip_gz(input, output):
     with gzip.open(input, 'rb') as f_in:
         with open(output, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+
 
 def exception_handle(log_name):
     with open(f"./logs/{log_name}", "r") as log:
@@ -115,6 +118,7 @@ def exception_handle(log_name):
             return False
         print(f"\n{log_name} PASSED\n")
         return True
+
 
 def intensity_normalization(input_image, output_image):
     print("\nDENOISING\n")
@@ -147,6 +151,7 @@ def bias_correction(input_image, output_image):
     run(f"bash {SHELL}/bias.sh {input_image} {output_image} {log_name}")
     return exception_handle(log_name)
 
+
 def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
     print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
     if(Denoise):
@@ -165,6 +170,18 @@ def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
         else:
             return False
     shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
-    print("\nTemp mri image: "+ f"{TEMP_OUTPUT}/mri.nii")
+    print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
     print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
     return True
+
+
+def pad_2d(data, r, c):
+    res = np.zeros((r, c))
+    m, n = data.shape
+    res[(r - m) // 2: (r - m) // 2 + m, (c - n) // 2: (c - n) // 2 + n] = data
+    return res
+
+
+def crop_2d(data, r, c):
+    m, n = data.shape
+    return data[(m - r) // 2: (m - r) // 2 + r, (n - c) // 2: (n - c) // 2+c]

@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import shutil
 import gzip
 
+
 DATA = "input"
 
 SHELL = "shell_scripts"

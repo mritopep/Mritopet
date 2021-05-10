@@ -1,5 +1,7 @@
 from os import path, mkdir, listdir, unlink, makedirs
 from shutil import rmtree
+import string
+import random
 
 app_root = path.dirname(path.abspath(__file__))
 
@@ -60,3 +62,7 @@ def supported_file(filename):
         return True
     else:
         return False
+
+def generate_secret_key():
+    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 7))
+    return str(res)

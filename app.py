@@ -5,6 +5,7 @@ from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 from shutil import rmtree
 from flaskthreads import AppContextThread
+import time
 
 from server_util import *
 
@@ -70,6 +71,8 @@ def upload():
 def next():
     global model, start, end, file_upload_start, file_upload_end, process_start, process_status, process_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
 
+    start_time = time.time()
+
     print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
 
     input_folder = path.join(app_root, 'input', 'nii')
@@ -80,7 +83,7 @@ def next():
     process_start = True
 
     def process(file_path, Skull_Strip=skull_strip, Denoise=denoise, Bais_Correction=bias_field_correction):
-        global process_status
+        global model,process_status
         process_status = model.process(
             file_path, Skull_Strip=skull_strip, Denoise=denoise, Bais_Correction=bias_field_correction)
 
@@ -108,6 +111,9 @@ def next():
 
         start = False
         end = True
+
+    end_time = time.time()
+    print(f"Time Taken : {end_time-start_time} min")
 
     return render_template("index.html")
 

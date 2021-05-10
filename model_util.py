@@ -157,21 +157,21 @@ def bias_correction(input_image, output_image):
 
 def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
     print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
-    if(Denoise):
-        if(intensity_normalization(input, f"{DENOISE}/mri")):
-            input = f"{DENOISE}/mri.nii"
-        else:
-            return False
-    if(Skull_Strip):
-        if(skull_strip(input)):
-            input = f"{SKULL_STRIP}/mri_sk.nii"
-        else:
-            return False
-    if(Bais_Correction):
-        if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
-            input = f"{BAIS_COR}/mri.nii"
-        else:
-            return False
+    # if(Denoise):
+    #     if(intensity_normalization(input, f"{DENOISE}/mri")):
+    #         input = f"{DENOISE}/mri.nii"
+    #     else:
+    #         return False
+    # if(Skull_Strip):
+    #     if(skull_strip(input)):
+    #         input = f"{SKULL_STRIP}/mri_sk.nii"
+    #     else:
+    #         return False
+    # if(Bais_Correction):
+    #     if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
+    #         input = f"{BAIS_COR}/mri.nii"
+    #     else:
+    #         return False
     shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
     print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
     print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")

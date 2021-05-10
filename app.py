@@ -4,6 +4,7 @@ from os import path, mkdir, listdir, unlink
 from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 from shutil import rmtree
+from flaskthreads import AppContextThread
 
 from server_util import *
 
@@ -77,8 +78,16 @@ def next():
     print(f"File path : {file_path}")
 
     process_start = True
-    process_status = model.process(file_path, Skull_Strip=skull_strip,
-                                   Denoise=denoise, Bais_Correction=bias_field_correction)
+
+    def process(file_path, Skull_Strip=skull_strip, Denoise=denoise, Bais_Correction=bias_field_correction):
+        global process_status
+        process_status = model.process(
+            file_path, Skull_Strip=skull_strip, Denoise=denoise, Bais_Correction=bias_field_correction)
+
+    process_thread = AppContextThread(target=process(
+        file_path, Skull_Strip=skull_strip, Denoise=denoise, Bais_Correction=bias_field_correction))
+    process_thread.start()
+    process_thread.join()
     process_end = True
 
     if(process_status == False and process_end == True):

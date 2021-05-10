@@ -64,5 +64,5 @@ def supported_file(filename):
         return False
 
 def generate_secret_key():
-    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 7))
+    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 5))
     return str(res)

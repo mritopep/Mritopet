@@ -22,24 +22,23 @@ model = Mri2Pet()
 
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
 
-# initialization
-session['skull_strip'] = False
-session['denoise'] = False
-session['bias_field_correction'] = False
-session['file_upload_start'] = False
-session['file_upload_end'] = False
-session['process_start'] = False
-session['process_end'] = False
-session['generate_start'] = False
-session['generate_end'] = False
-session['saving_start'] = False
-session['saving_end'] = False
-session['start'] = True
-session['end'] = False
-
-
 @app.route("/")
 def index():
+    # initialization
+    if 'start' not in session: 
+        session['skull_strip'] = False
+        session['denoise'] = False
+        session['bias_field_correction'] = False
+        session['file_upload_start'] = False
+        session['file_upload_end'] = False
+        session['process_start'] = False
+        session['process_end'] = False
+        session['generate_start'] = False
+        session['generate_end'] = False
+        session['saving_start'] = False
+        session['saving_end'] = False
+        session['start'] = True
+        session['end'] = False
     return render_template("index.html")
 
 

@@ -7,8 +7,11 @@ from shutil import rmtree
 import time
 import string
 import random
+from flask import Response
+import shutil
 
 from server_util import *
+from model_util import intensity_normalization, skull_strip, bias_correction, DENOISE, SKULL_STRIP, BAIS_COR, TEMP_OUTPUT
 
 app_root = path.dirname(path.abspath(__file__))
 
@@ -22,10 +25,11 @@ model = Mri2Pet()
 
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
 
+
 @app.route("/")
 def index():
     # initialization
-    if 'start' not in session: 
+    if 'start' not in session:
         session['skull_strip'] = False
         session['denoise'] = False
         session['bias_field_correction'] = False
@@ -62,6 +66,100 @@ def upload():
     return redirect(url_for('index'))
 
 
+def stream_template(template_name, **context):
+    app.update_template_context(context)
+    t = app.jinja_env.get_template(template_name)
+    rv = t.stream(context)
+    rv.enable_buffering(5)
+    return rv
+
+
+def process(file_path, Skull_Strip=True, Denoise=True, Bais_Correction=True):
+    skull_strip_end = False
+    denoise_end = False
+    bias_field_correction_end = False
+    process_start = False
+    process_end = False
+    generate_start = False
+    generate_end = False
+    saving_start = False
+    saving_end = False
+    start = False
+    end = False
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    process_start = True
+
+    print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
+
+    if(Denoise):
+        if(intensity_normalization(file_path, f"{DENOISE}/mri")):
+            denoise_end = True
+            input = f"{DENOISE}/mri.nii"
+        else:
+            denoise_end = False
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    if(Skull_Strip):
+        if(skull_strip(input)):
+            skull_strip_end = True
+            input = f"{SKULL_STRIP}/mri_sk.nii"
+        else:
+            skull_strip_end = False
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    if(Bais_Correction):
+        if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
+            bias_field_correction_end = True
+            input = f"{BAIS_COR}/mri.nii"
+        else:
+            bias_field_correction_end = False
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
+
+    print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
+    print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
+
+    process_end = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    if(process_end == False):
+        print(bcolors.FAIL+"Process failed restart process with change in configuration"+bcolors.ENDC)
+
+    generate_start = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    model.generate()
+
+    generate_end = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    saving_start = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    model.save()
+
+    saving_end = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+    print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
+
+    start = False
+    end = True
+
+    yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
+
+
 @app.route("/next", methods=['GET', 'POST'])
 def next():
     global model
@@ -75,41 +173,18 @@ def next():
 
     print(f"File path : {file_path}")
 
-    session['process_start'] = True
-
     session['skull_strip'] = True
     session['denoise'] = True
     session['bias_field_correction'] = True
 
-    session['process_end'] = model.process(
-        file_path, Skull_Strip=session['skull_strip'], Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])
-
-    if(session['process_end'] == False):
-        session['process_start'] = False
-        session['process_end'] = False
-        print(bcolors.FAIL+"Process failed restart process with change in configuration"+bcolors.ENDC)
-    else:
-        session['generate_start']  = True
-
-        model.generate()
-
-        session['generate_end'] = True
-
-        session['saving_start'] = True
-
-        model.save()
-
-        session['saving_end'] = True
-
-        print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
-
-        session['start'] = False
-        session['end'] = True
+    boolean_var = process(file_path, Skull_Strip=session['skull_strip'],
+                          Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])
 
     end_time = time.time()
-    print(bcolors.OKCYAN+f"Time Taken : {(end_time-start_time)/60} min"+bcolors.ENDC)
+    print(bcolors.OKCYAN +
+          f"Time Taken : {(end_time-start_time)/60} min"+bcolors.ENDC)
 
-    return redirect(url_for('index'))
+    return Response(stream_template('index.html', boolean=boolean_var))
 
 
 @app.route("/download", methods=['GET', 'POST'])

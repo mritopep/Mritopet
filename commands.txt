@@ -21,3 +21,5 @@ session['saving_start'] = False
 session['saving_end'] = False
 session['start'] = True
 session['end'] = False
+
+intensity_normalization, skull_strip, bias_correction, DENOISE, SKULL_STRIP, BAIS_COR, TEMP_OUTPUT

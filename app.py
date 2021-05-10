@@ -23,9 +23,9 @@ denoise = False
 bias_field_correction = False
 file_upload_start = False
 file_upload_end = False
-preprocess_start = False
+process_start = False
 process_status = True
-preprocess_end = False
+process_end = False
 generate_start = False
 generate_end = False
 saving_start = False
@@ -67,7 +67,7 @@ def upload():
 
 @app.route("/next", methods=['GET', 'POST'])
 def next():
-    global model, start, end, file_upload_start, file_upload_end, preprocess_start, process_status, preprocess_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
+    global model, start, end, file_upload_start, file_upload_end, process_start, process_status, process_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
 
     print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
 
@@ -76,15 +76,15 @@ def next():
 
     print(f"File path : {file_path}")
 
-    preprocess_start = True
+    process_start = True
     process_status = model.process(file_path, Skull_Strip=skull_strip,
                                    Denoise=denoise, Bais_Correction=bias_field_correction)
-    preprocess_end = True
+    process_end = True
 
     if(process_status == False and process_end == True):
-        preprocess_start = False
+        process_start = False
         process_status = True
-        preprocess_end = False
+        process_end = False
         print("process failed restart process with change in configuration")
     else:
         generate_start = True
@@ -105,7 +105,7 @@ def next():
 
 @app.route("/download", methods=['GET', 'POST'])
 def download():
-    global start, end, file_upload_start, file_upload_end, preprocess_start, process_status, preprocess_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
+    global start, end, file_upload_start, file_upload_end, process_start, process_status, process_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
 
     file_path = path.join(app_root, 'output/nii/pet.nii.gz')
 
@@ -122,9 +122,9 @@ def download():
         bias_field_correction = False
         file_upload_start = False
         file_upload_end = False
-        preprocess_start = False
+        process_start = False
         process_status = True
-        preprocess_end = False
+        process_end = False
         generate_start = False
         generate_end = False
         saving_start = False
@@ -149,4 +149,4 @@ def test():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(threaded=False)

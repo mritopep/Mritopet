@@ -92,6 +92,8 @@ def read_nifti(file):
     files = sorted(listdir(folder))
     images = []
 
+    # input/img/img-slice000.png
+
     print(bcolors.BOLD, len(files), bcolors.ENDC)
 
     for i in range(len(files)):
@@ -177,9 +179,9 @@ def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
 
 
 def pad_2d(data, r, c):
-    res = np.zeros((r, c))
     m, n, other = data.shape
-    res[(r - m) // 2: (r - m) // 2 + m, (c - n) // 2: (c - n) // 2 + n] = data
+    res = np.zeros((r, c, other))
+    res[(r - m) // 2: (r - m) // 2 + m, (c - n) // 2: (c - n) // 2 + n, :] = data
     return res
 
 

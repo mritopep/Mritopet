@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for
-from mri2pet import Mri2Pet
 from os import path, mkdir, listdir, unlink
 from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
@@ -11,11 +10,11 @@ app_root = path.dirname(path.abspath(__file__))
 
 app = Flask(__name__)
 
-run_with_ngrok(app)
+# run_with_ngrok(app)
 
-model = Mri2Pet()
+# model = Mri2Pet()
 
-print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
+# print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
 
 # initialization
 skull_strip = False
@@ -45,10 +44,10 @@ def index():
 
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
-    global model, file_upload_start, file_upload_end
+    global file_upload_start, file_upload_end
 
     file_upload_start = True
-    global model
+
     if request.method == 'POST':
         if request.files:
             f = request.files['mri_file']
@@ -67,7 +66,7 @@ def upload():
 
 @app.route("/next", methods=['GET', 'POST'])
 def next():
-    global model, start, end, file_upload_start, file_upload_end, preprocess_start, process_status, preprocess_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
+    global start, end, file_upload_start, file_upload_end, preprocess_start, process_status, preprocess_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
 
     print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
 
@@ -77,8 +76,9 @@ def next():
     print(f"File path : {file_path}")
 
     preprocess_start = True
-    process_status = model.process(file_path, Skull_Strip=skull_strip,
-                                   Denoise=denoise, Bais_Correction=bias_field_correction)
+    # process_status = model.process(file_path, Skull_Strip=skull_strip,
+    #                                Denoise=denoise, Bais_Correction=bias_field_correction)
+    print("process completed")
     preprocess_end = True
 
     if(process_status == False and process_end == True):
@@ -88,11 +88,13 @@ def next():
         print("process failed restart process with change in configuration")
     else:
         generate_start = True
-        model.generate()
+        # model.generate()
+        print("generate completed")
         generate_end = True
 
         saving_start = True
-        model.save()
+        # model.save()
+        print("saving completed")
         saving_end = True
 
         print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
@@ -107,7 +109,8 @@ def next():
 def download():
     global start, end, file_upload_start, file_upload_end, preprocess_start, process_status, preprocess_end, generate_start, generate_end, saving_start, saving_end, skull_strip, denoise, bias_field_correction
 
-    file_path = path.join(app_root, 'output/nii/pet.nii.gz')
+    input_folder = path.join(app_root, 'input', 'nii')
+    file_path = input_folder + '/' + listdir(input_folder)[0]
 
     def generate():
         with open(file_path, "rb") as file:
@@ -136,15 +139,15 @@ def download():
 
     response = app.response_class(generate(), mimetype='application/x-gzip')
     response.headers.set('Content-Disposition',
-                         'attachment', filename="pet.nii.gz")
+                         'attachment', filename="pet.nii")
     return response
 
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():
-    global model
-    model.load_test_data()
-    model.test()
+    # global model
+    # model.load_test_data()
+    # model.test()
     return render_template("index.html")
 
 

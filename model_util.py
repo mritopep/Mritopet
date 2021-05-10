@@ -98,7 +98,8 @@ def read_nifti(file):
         data = cv2.imread(folder + '/' + files[i])
         print(data.shape)
         data = gamma_correction(data)
-        images.append(data)
+        padded_input = pad_2d(data, 256, 256)
+        images.append(padded_input)
 
     images = np.asarray(images)
     return images
@@ -177,7 +178,7 @@ def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
 
 def pad_2d(data, r, c):
     res = np.zeros((r, c))
-    m, n = data.shape
+    m, n, other = data.shape
     res[(r - m) // 2: (r - m) // 2 + m, (c - n) // 2: (c - n) // 2 + n] = data
     return res
 

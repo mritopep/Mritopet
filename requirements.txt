@@ -1,5 +1,7 @@
 Flask==0.12.5
-SimpleITK
+SimpleITK  \
+            --pre
+            --find-links https://github.com/SimpleITK/SimpleITK/releases/tag/latest 
 opencv-python
 matplotlib
 scikit-image
@@ -11,3 +13,10 @@ pfmisc
 nibabel
 pydicom
 ipykernel
+nibabel
+nilearn
+numpy
+scikit-learn
+scipy
+six
+sklearn

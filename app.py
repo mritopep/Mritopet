@@ -11,7 +11,7 @@ from flask import Response
 import shutil
 
 from server_util import *
-from model_util import intensity_normalization, skull_strip, bias_correction, DENOISE, SKULL_STRIP, BAIS_COR, TEMP_OUTPUT
+from model_util import *
 
 app_root = path.dirname(path.abspath(__file__))
 
@@ -25,24 +25,8 @@ model = Mri2Pet()
 
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
 
-
 @app.route("/")
 def index():
-    # initialization
-    if 'start' not in session:
-        session['skull_strip'] = False
-        session['denoise'] = False
-        session['bias_field_correction'] = False
-        session['file_upload_start'] = False
-        session['file_upload_end'] = False
-        session['process_start'] = False
-        session['process_end'] = False
-        session['generate_start'] = False
-        session['generate_end'] = False
-        session['saving_start'] = False
-        session['saving_end'] = False
-        session['start'] = True
-        session['end'] = False
     return render_template("index.html")
 
 
@@ -77,112 +61,38 @@ def stream_template(template_name, **context):
 @app.route("/next", methods=['GET', 'POST'])
 def next():
     global model
-
-    start_time = time.time()
-
     print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
-
     input_folder = path.join(app_root, 'input', 'nii')
     file_path = input_folder + '/' + listdir(input_folder)[0]
-
     print(f"File path : {file_path}")
-
     session['skull_strip'] = True
     session['denoise'] = True
     session['bias_field_correction'] = True
-
-    end_time = time.time()
-    print(bcolors.OKCYAN +
-          f"Time Taken : {(end_time-start_time)/60} min"+bcolors.ENDC)
-
-    def process(file_path, Skull_Strip=True, Denoise=True, Bais_Correction=True):
-        skull_strip_end = False
-        denoise_end = False
-        bias_field_correction_end = False
-        process_start = False
-        process_end = False
-        generate_start = False
-        generate_end = False
-        saving_start = False
-        saving_end = False
-        start = False
-        end = False
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        process_start = True
-
-        print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
-
-        if(Denoise):
-            if(intensity_normalization(file_path, f"{DENOISE}/mri")):
-                denoise_end = True
-                input = f"{DENOISE}/mri.nii"
-            else:
-                denoise_end = False
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        if(Skull_Strip):
-            if(skull_strip(input)):
-                skull_strip_end = True
-                input = f"{SKULL_STRIP}/mri_sk.nii"
-            else:
-                skull_strip_end = False
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        if(Bais_Correction):
-            if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
-                bias_field_correction_end = True
-                input = f"{BAIS_COR}/mri.nii"
-            else:
-                bias_field_correction_end = False
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
-
-        print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
-        print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
-
-        process_end = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        if(process_end == False):
-            print(
-                bcolors.FAIL+"Process failed restart process with change in configuration"+bcolors.ENDC)
-
-        generate_start = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
+    def process(model, file_path, Skull_Strip=True, Denoise=True, Bais_Correction=True):
+        boolean = []
+        boolean.append("start")
+        yield boolean
+        boolean.append("process_start")
+        yield boolean
+        model.process(file_path, Skull_Strip=Skull_Strip,
+                      Denoise=Denoise, Bais_Correction=Bais_Correction)
+        boolean.append("process_end")
+        yield boolean
+        boolean.append("generate_start")
+        yield boolean
         model.generate()
-
-        generate_end = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        saving_start = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
+        boolean.append("generate_end")
+        yield boolean
+        boolean.append("saving_start")
+        yield boolean
         model.save()
-
-        saving_end = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-        print(bcolors.OKGREEN + 'Pet saved' + bcolors.ENDC)
-
-        start = False
-        end = True
-
-        yield [skull_strip_end, denoise_end, bias_field_correction_end, process_start, process_end, generate_start, generate_end, saving_start, saving_end]
-
-    return Response(stream_template('index.html', boolean=process(file_path, Skull_Strip=session['skull_strip'],
-                                                                  Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])))
+        boolean.append("saving_end")
+        yield boolean
+        boolean.append("start")
+        boolean.remove("end")
+        yield boolean
+    return Response(stream_template('index.html', boolean=process(model, file_path, Skull_Strip=session['skull_strip'],
+                                                                      Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])))
 
 
 @app.route("/download", methods=['GET', 'POST'])
@@ -195,20 +105,6 @@ def download():
 
         delete_contents('./output')
         delete_contents('./input')
-
-        session['skull_strip'] = False
-        session['denoise'] = False
-        session['bias_field_correction'] = False
-        session['file_upload_start'] = False
-        session['file_upload_end'] = False
-        session['process_start'] = False
-        session['process_end'] = False
-        session['generate_start'] = False
-        session['generate_end'] = False
-        session['saving_start'] = False
-        session['saving_end'] = False
-        session['start'] = True
-        session['end'] = False
 
         print(bcolors.OKBLUE + "All files deleted" + bcolors.ENDC)
 

@@ -6,11 +6,14 @@ import cv2
 from os import listdir
 from os import system as run
 import numpy as np
-#from numpy import savez_compressed
 from med2img.med2img import convert
 from matplotlib import pyplot as plt
 import shutil
 import gzip
+from soft.src.skull import SkullStripper
+from scipy import ndimage
+import SimpleITK as sitk
+import time
 
 from model_util import *
 
@@ -34,11 +37,12 @@ class Mri2Pet:
 
     def process(self, file, Skull_Strip=True, Denoise=True, Bais_Correction=True):
         print(bcolors.OKBLUE + "Processing Data..." + bcolors.ENDC)
-        if(preprocess(file, Skull_Strip=True, Denoise=True, Bais_Correction=True)):
+        try:
+            preprocess(file, Skull_Strip=True, Denoise=True, Bais_Correction=True)
             self.img = read_nifti("input/temp/output/mri.nii")
             print(bcolors.OKBLUE + "Processing complete" + bcolors.ENDC)
             return True
-        else:
+        except:
             print(bcolors.FAIL + "Processing Failed" + bcolors.ENDC)
             return False
 

@@ -6,23 +6,14 @@ import cv2
 from os import listdir
 from os import system as run
 import numpy as np
-#from numpy import savez_compressed
 from med2img.med2img import convert
 from matplotlib import pyplot as plt
 import shutil
 import gzip
-
-
-DATA = "input"
-
-SHELL = "shell_scripts"
-
-# Temp
-SKULL_STRIP = f'{DATA}/temp/skull_strip'
-DENOISE = f'{DATA}/temp/denoise'
-BAIS_COR = f'{DATA}/temp/bias_cor'
-TEMP_OUTPUT = f'{DATA}/temp/output'
-
+from soft.src.skull import SkullStripper
+from scipy import ndimage
+import SimpleITK as sitk
+import time
 
 class bcolors:
     HEADER = '\033[95m'
@@ -114,69 +105,113 @@ def upzip_gz(input, output):
             shutil.copyfileobj(f_in, f_out)
 
 
-def exception_handle(log_name):
-    with open(f"./logs/{log_name}", "r") as log:
-        status = log.read().strip()
-        if(status == "failed"):
-            print(f"\n{log_name} FAILED\n")
-            return False
-        print(f"\n{log_name} PASSED\n")
-        return True
-
-
-def intensity_normalization(input_image, output_image):
-    print("\nDENOISING\n")
-    # print("\ninput image: "+ input_image)
-    # print("\noutput image: "+ output_image)
-    log_name = "DENOISING"
-    run(
-        f"bash {SHELL}/denoise.sh {input_image} {output_image} {log_name}")
-    return exception_handle(log_name)
-
-
 def skull_strip(input_image):
-    scan = input_image.split("/")[-1][:-4]
+    begin = time.time() 
     print("\nSKULL STRIPPING\n")
-    # print("\ninput image: "+ input_image)
-    # print("\noutput image: "+ f"{SKULL_STRIP}/{scan}_sk.nii")
-    log_name = "SKULL_STRIPPING"
-    run(
-        f"bash {SHELL}/skull_strip.sh {input_image} {SKULL_STRIP} {log_name}")
-    upzip_gz(f"{SKULL_STRIP}/{scan}_masked.nii.gz",
-             f"{SKULL_STRIP}/{scan}_sk.nii")
-    return exception_handle(log_name)
+    skull_stripper = SkullStripper(input_image, "input/temp/skull_strip", False, False)
+    skull_stripper.strip_skull()
+    upzip_gz("input/temp/skull_strip/mri_masked.nii.gz","input/temp/skull_strip/mri_sk.nii")
+    end = time.time() 
+    print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
+    
+def denoise(input_image, output_image):
+    begin = time.time() 
+    print("\nDENOISING\n")
+    denoise_strength = 3
+    data = np.asarray(nib.load(input_image).dataobj)
+    data_filtered = np.zeros(data.shape)
+    slices = data.shape[2]
+    for i in range(slices):
+        data_filtered[:,:,i,0] = ndimage.median_filter(data[:,:,i,0], denoise_strength)
+    new_image = nib.Nifti1Image(data_filtered, affine=np.eye(4))
+    nib.save(new_image, path)
+    end = time.time() 
+    print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
 def bias_correction(input_image, output_image):
-    print("\nBIAS CORRECTION\n")
-    # print("\ninput image: "+ input_image)
-    # print("\noutput image: "+ output_image)
-    log_name = "BIAS_CORRECTION"
-    run(f"bash {SHELL}/bias.sh {input_image} {output_image} {log_name}")
-    return exception_handle(log_name)
+    begin = time.time()
+    inputImage = sitk.ReadImage(input_image, sitk.sitkFloat32)
+    corrector = sitk.N4BiasFieldCorrectionImageFilter()
+    maskImage = sitk.OtsuThreshold(inputImage, 0, 1, 200)
+    numberFittingLevels = 4
+    output = corrector.Execute(inputImage, maskImage)
+    log_bias_field = corrector.GetLogBiasFieldAsImage(inputImage)
+    output = inputImage / sitk.Exp( log_bias_field )
+    sitk.WriteImage(output, output_image)
+    end = time.time() 
+    print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
 
 def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
     print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
     if(Denoise):
-        if(intensity_normalization(input, f"{DENOISE}/mri")):
-            input = f"{DENOISE}/mri.nii"
-        else:
-            return False
+        denoise(input, "input/temp/denoise/mri")
+        input = "input/temp/denoise/mri.nii"
     if(Skull_Strip):
-        if(skull_strip(input)):
-            input = f"{SKULL_STRIP}/mri_sk.nii"
-        else:
-            return False
+        skull_strip(input)
+        input = "input/temp/skull_strip/mri_sk.nii"
     if(Bais_Correction):
-        if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
-            input = f"{BAIS_COR}/mri.nii"
-        else:
-            return False
-    shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
-    print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
+        bias_correction(input, "input/temp/bias_cor/mri.nii")
+        input = "input/temp/bias_cor/mri.nii"
+    shutil.copyfile(input, "input/temp/output/mri.nii")
+    print("\nTemp mri image: " + "input/temp/output/mri.nii")
     print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
-    return True
+
+
+# def intensity_normalization(input_image, output_image):
+#     print("\nDENOISING\n")
+#     # print("\ninput image: "+ input_image)
+#     # print("\noutput image: "+ output_image)
+#     log_name = "DENOISING"
+#     run(
+#         f"bash {SHELL}/denoise.sh {input_image} {output_image} {log_name}")
+#     return exception_handle(log_name)
+
+
+# def skull_strip(input_image):
+#     scan = input_image.split("/")[-1][:-4]
+#     print("\nSKULL STRIPPING\n")
+#     # print("\ninput image: "+ input_image)
+#     # print("\noutput image: "+ f"{SKULL_STRIP}/{scan}_sk.nii")
+#     log_name = "SKULL_STRIPPING"
+#     run(
+#         f"bash {SHELL}/skull_strip.sh {input_image} {SKULL_STRIP} {log_name}")
+#     upzip_gz(f"{SKULL_STRIP}/{scan}_masked.nii.gz",
+#              f"{SKULL_STRIP}/{scan}_sk.nii")
+#     return exception_handle(log_name)
+
+
+# def bias_correction(input_image, output_image):
+#     print("\nBIAS CORRECTION\n")
+#     # print("\ninput image: "+ input_image)
+#     # print("\noutput image: "+ output_image)
+#     log_name = "BIAS_CORRECTION"
+#     run(f"bash {SHELL}/bias.sh {input_image} {output_image} {log_name}")
+#     return exception_handle(log_name)
+
+
+# def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
+#     print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
+#     if(Denoise):
+#         if(intensity_normalization(input, f"{DENOISE}/mri")):
+#             input = f"{DENOISE}/mri.nii"
+#         else:
+#             return False
+#     if(Skull_Strip):
+#         if(skull_strip(input)):
+#             input = f"{SKULL_STRIP}/mri_sk.nii"
+#         else:
+#             return False
+#     if(Bais_Correction):
+#         if(bias_correction(input, f"{BAIS_COR}/mri.nii")):
+#             input = f"{BAIS_COR}/mri.nii"
+#         else:
+#             return False
+#     shutil.copyfile(input, f"{TEMP_OUTPUT}/mri.nii")
+#     print("\nTemp mri image: " + f"{TEMP_OUTPUT}/mri.nii")
+#     print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
+#     return True
 
 
 def pad_2d(data, r, c):

@@ -74,23 +74,28 @@ def next():
         yield boolean
         boolean.append("process_start")
         yield boolean
-        model.process(file_path, Skull_Strip=Skull_Strip,
+        process_status = model.process(file_path, Skull_Strip=Skull_Strip,
                       Denoise=Denoise, Bais_Correction=Bais_Correction)
-        boolean.append("process_end")
-        yield boolean
-        boolean.append("generate_start")
-        yield boolean
-        model.generate()
-        boolean.append("generate_end")
-        yield boolean
-        boolean.append("saving_start")
-        yield boolean
-        model.save()
-        boolean.append("saving_end")
-        yield boolean
-        boolean.append("start")
-        boolean.remove("end")
-        yield boolean
+        if(not process_status):
+            print("Failed: Start with new Configuration")
+            boolean = ["start"]
+            yield boolean
+        else:
+            boolean.append("process_end")
+            yield boolean
+            boolean.append("generate_start")
+            yield boolean
+            model.generate()
+            boolean.append("generate_end")
+            yield boolean
+            boolean.append("saving_start")
+            yield boolean
+            model.save()
+            boolean.append("saving_end")
+            yield boolean
+            boolean.append("start")
+            boolean.remove("end")
+            yield boolean
     return Response(stream_template('index.html', boolean=process(model, file_path, Skull_Strip=session['skull_strip'],
                                                                       Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])))
 

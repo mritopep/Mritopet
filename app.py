@@ -15,7 +15,10 @@ from model_util import *
 
 app_root = path.dirname(path.abspath(__file__))
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path='',
+            static_folder='static',
+            template_folder='templates')
 
 app.secret_key = generate_secret_key()
 
@@ -24,6 +27,7 @@ run_with_ngrok(app)
 model = Mri2Pet()
 
 print(bcolors.BOLD, model, bcolors.ENDC, flush=True)
+
 
 @app.route("/")
 def index():
@@ -60,44 +64,37 @@ def stream_template(template_name, **context):
 
 @app.route("/next", methods=['GET', 'POST'])
 def next():
-    global model
     print(bcolors.OKBLUE + "Starting" + bcolors.ENDC)
     input_folder = path.join(app_root, 'input', 'nii')
     file_path = input_folder + '/' + listdir(input_folder)[0]
     print(f"File path : {file_path}")
-    session['skull_strip'] = True
-    session['denoise'] = True
-    session['bias_field_correction'] = True
-    def process(model, file_path, Skull_Strip=True, Denoise=True, Bais_Correction=True):
+
+    def process(model, file_path, Skull_Strip, Denoise, Bais_Correction):
+        print("Inside Generator")
         boolean = []
         boolean.append("start")
         yield boolean
         boolean.append("process_start")
         yield boolean
-        process_status = model.process(file_path, Skull_Strip=Skull_Strip,
+        model.process(file_path, Skull_Strip=Skull_Strip,
                       Denoise=Denoise, Bais_Correction=Bais_Correction)
-        if(not process_status):
-            print("Failed: Start with new Configuration")
-            boolean = ["start"]
-            yield boolean
-        else:
-            boolean.append("process_end")
-            yield boolean
-            boolean.append("generate_start")
-            yield boolean
-            model.generate()
-            boolean.append("generate_end")
-            yield boolean
-            boolean.append("saving_start")
-            yield boolean
-            model.save()
-            boolean.append("saving_end")
-            yield boolean
-            boolean.append("start")
-            boolean.remove("end")
-            yield boolean
-    return Response(stream_template('index.html', boolean=process(model, file_path, Skull_Strip=session['skull_strip'],
-                                                                      Denoise=session['denoise'], Bais_Correction=session['bias_field_correction'])))
+        boolean.append("process_end")
+        yield boolean
+        boolean.append("generate_start")
+        yield boolean
+        model.generate()
+        boolean.append("generate_end")
+        yield boolean
+        boolean.append("saving_start")
+        yield boolean
+        model.save()
+        boolean.append("saving_end")
+        yield boolean
+        boolean.append("end")
+        boolean.remove("start")
+        yield boolean
+    return Response(stream_template('sample.html', 
+    boolean=process(model, file_path, Skull_Strip=True, Denoise=True, Bais_Correction=True)))
 
 
 @app.route("/download", methods=['GET', 'POST'])

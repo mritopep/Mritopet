@@ -35,16 +35,11 @@ class Mri2Pet:
         nib.save(output_nii, path.join(
             THIS_FOLDER, 'output/nii/output.nii.gz'))
 
-    def process(self, file, Skull_Strip=True, Denoise=True, Bais_Correction=True):
+    def process(self, file, Skull_Strip, Denoise, Bais_Correction):
         print(bcolors.OKBLUE + "Processing Data..." + bcolors.ENDC)
-        try:
-            preprocess(file, Skull_Strip=True, Denoise=True, Bais_Correction=True)
-            self.img = read_nifti("input/temp/output/mri.nii")
-            print(bcolors.OKBLUE + "Processing complete" + bcolors.ENDC)
-            return True
-        except:
-            print(bcolors.FAIL + "Processing Failed" + bcolors.ENDC)
-            return False
+        preprocess(file, Skull_Strip=Skull_Strip, Denoise=Denoise, Bais_Correction=Bais_Correction)
+        self.img = read_nifti("input/temp/output/mri.nii")
+        print(bcolors.OKBLUE + "Processing complete" + bcolors.ENDC)
 
     def save(self):
         print(bcolors.OKBLUE + "Saving .nii file of result..." + bcolors.ENDC)

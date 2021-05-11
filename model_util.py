@@ -105,14 +105,14 @@ def upzip_gz(input, output):
             shutil.copyfileobj(f_in, f_out)
 
 
-def skull_strip(input_image):
-    begin = time.time() 
-    print("\nSKULL STRIPPING\n")
-    skull_stripper = SkullStripper(input_image, "input/temp/skull_strip", False, False)
-    skull_stripper.strip_skull()
-    upzip_gz("input/temp/skull_strip/mri_masked.nii.gz","input/temp/skull_strip/mri_sk.nii")
-    end = time.time() 
-    print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
+# def skull_strip(input_image):
+#     begin = time.time() 
+#     print("\nSKULL STRIPPING\n")
+#     skull_stripper = SkullStripper(input_image, "input/temp/skull_strip", False, False)
+#     skull_stripper.strip_skull()
+#     upzip_gz("input/temp/skull_strip/mri_masked.nii.gz","input/temp/skull_strip/mri_sk.nii")
+#     end = time.time() 
+#     print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
     
 def denoise(input_image, output_image):
@@ -125,11 +125,12 @@ def denoise(input_image, output_image):
     for i in range(slices):
         data_filtered[:,:,i,0] = ndimage.median_filter(data[:,:,i,0], denoise_strength)
     new_image = nib.Nifti1Image(data_filtered, affine=np.eye(4))
-    nib.save(new_image, path)
+    nib.save(new_image, output_image)
     end = time.time() 
     print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
 def bias_correction(input_image, output_image):
+    print("\nBIAS CORRECTION\n")
     begin = time.time()
     inputImage = sitk.ReadImage(input_image, sitk.sitkFloat32)
     corrector = sitk.N4BiasFieldCorrectionImageFilter()
@@ -142,6 +143,12 @@ def bias_correction(input_image, output_image):
     end = time.time() 
     print("Total time taken :", (end - begin)//60 ,"min.", (end - begin)%60 , "s")
 
+def skull_strip(input_image):
+    print("\nSKULL STRIPPING\n")
+    log_name = "SKULL_STRIPPING"
+    SKULL_STRIP = "input/temp/skull_strip"
+    run(f"bash shell_scripts/skull_strip.sh {input_image} {SKULL_STRIP} {log_name}")
+    upzip_gz(f"{SKULL_STRIP}/mri_masked.nii.gz",f"{SKULL_STRIP}/mri_sk.nii")
 
 def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
     print("\n-------------------MRI PREPROCESS STARTED--------------------\n")
@@ -157,6 +164,7 @@ def preprocess(input, Skull_Strip=True, Denoise=True, Bais_Correction=True):
     shutil.copyfile(input, "input/temp/output/mri.nii")
     print("\nTemp mri image: " + "input/temp/output/mri.nii")
     print("\n-------------------MRI PREPROCESS COMPELETED--------------------\n")
+
 
 
 # def intensity_normalization(input_image, output_image):
